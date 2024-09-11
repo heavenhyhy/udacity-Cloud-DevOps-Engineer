@@ -13,7 +13,6 @@ locals {
     woff        = "font/woff"
     woff2       = "font/woff2"
   }
-  s3_origin_id      = "SangTD2 Static Website"
 }
 
 resource "aws_s3_bucket" "static_website" {
@@ -87,21 +86,22 @@ resource "aws_cloudfront_origin_access_control" "static_website" {
 
 resource "aws_cloudfront_distribution" "static_website_distribution" {
   origin {
-    domain_name              = aws_s3_bucket.static_website.bucket_domain_name
+    domain_name              = aws_s3_bucket.static_website.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.static_website.id
-    origin_id                = local.s3_origin_id
+    origin_id                = aws_s3_bucket.static_website.bucket_regional_domain_name
+    # Bug
+    # https://github.com/hashicorp/terraform-provider-aws/issues/26850
+    # https://github.com/hashicorp/terraform-provider-aws/issues/4757
   }
 
   enabled             = true
   comment             = "Static website"
   default_root_object = "index.html"
 
-  aliases = ["sangtd2.udacity.clouddevops.com"]
-
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = local.s3_origin_id
+    target_origin_id = aws_s3_bucket.static_website.bucket_regional_domain_name
 
     forwarded_values {
       query_string = false
