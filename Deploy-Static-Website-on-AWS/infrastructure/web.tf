@@ -15,6 +15,8 @@ locals {
   }
 }
 
+# Most of the code copied from my previous project: 
+# https://github.com/heavenhyhy/udacity-design-for-availability-resilience-reliability-replacement-project/tree/master/infrastructure/web
 resource "aws_s3_bucket" "static_website" {
   bucket = "81da30af-3fd5-44e4-b5b6-60110b443ba5-website-static-website" // 81da30af-3fd5-44e4-b5b6-60110b443ba5 my Udacity userId
   force_destroy = true // delete all bucket objects when TF destroy
