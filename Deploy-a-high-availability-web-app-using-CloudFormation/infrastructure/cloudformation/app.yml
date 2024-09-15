@@ -1,0 +1,94 @@
+Description:  CD12352 - Infrastructure as Code Project - Udagram
+
+Parameters:
+  KeyPair:
+    Type: String
+
+Resources:
+  ProfileWithRolesForOurApp:
+      Type: AWS::IAM::InstanceProfile
+      Properties: 
+        Roles:
+          - !ImportValue S3Role
+
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: ami-070f589e4b4a3fece
+        InstanceType: "t2.micro"
+        SecurityGroupIds:
+          - !ImportValue ApplicationSecurityGroup
+        IamInstanceProfile: !Ref ProfileWithRolesForOurApp
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            apt-get update -y
+            apt-get install apache2 -y
+            systemctl start apache2.service
+            cd /var/www/html
+            echo "Udacity Demo Web Server Up and Running!" > index.html
+
+  ApplicationLoadBalancerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: ApplicationLoadBalancerSG
+      GroupDescription: "Security group for this application server"
+      SecurityGroupEgress:
+      - IpProtocol: -1
+        CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      VpcId: !ImportValue VpcId
+
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: application-alb
+      SecurityGroups:
+      - !GetAtt ApplicationLoadBalancerSG.GroupId
+      Subnets:
+        - !ImportValue PublicSubnets
+
+  ApplicationLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ApplicationTargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  ApplicationTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /health
+      Name: ApplicationTargetGroup
+      Port: 5000
+      VpcId: !ImportValue VpcId
+      Protocol: HTTP
+      TargetType: instance
+
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier: !ImportValue PublicSubnets
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+      MinSize: 1
+      MaxSize: 2
+      DesiredCapacity: 1
+      HealthCheckGracePeriod: 300
+      TargetGroupARNs:
+        - !Ref ApplicationTargetGroup
+
+Outputs:
+  ApplicationURL:
+    Value: !Join ["", ["http://", !GetAtt ApplicationLoadBalancer.DNSName]] 

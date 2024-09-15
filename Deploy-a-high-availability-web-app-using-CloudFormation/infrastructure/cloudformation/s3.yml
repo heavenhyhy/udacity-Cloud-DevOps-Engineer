@@ -1,0 +1,53 @@
+Description:  CD12352 - Infrastructure as Code Project - S3 Bucket
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join [ "-", [ "static-content-sangtd2", !Ref 'AWS::AccountId' ] ]
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+
+  S3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CD12352UdacityS3ReadOnlyAccess
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: !GetAtt S3Role.Arn
+          Action:
+          - 's3:*'
+          Resource:
+          - !GetAtt S3Bucket.Arn
+          - !Join ['', [!GetAtt S3Bucket.Arn, '/*']]
+
+Outputs:
+  BucketName:
+    Value: !GetAtt S3Bucket.Arn
+  S3RoleName:
+    Value: !Ref S3Role
+    Export:
+      Name: S3Role
