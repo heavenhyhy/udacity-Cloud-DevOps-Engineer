@@ -1,11 +1,17 @@
 # CD12352 - Infrastructure as Code Project Solution
-# [YOUR NAME HERE]
+# SangTD2
+
+- [Infrastructure design](./screenshoots/)
+
+- Working URL: http://application-alb-1130231015.us-east-1.elb.amazonaws.com/
 
 ## Spin up instructions
-TODO
+- Navigate to [scripts](./scripts/) folder
+- Run the following command in Windows PowerShell/Terminal: `.\apply.ps1`
 
 ## Tear down instructions
-TODO
+- Navigate to [scripts](./scripts/) folder
+- Run the following command in Windows PowerShell/Terminal: `.\destroy.ps1`
 
 ## Other considerations
-TODO (optional)
+N/A

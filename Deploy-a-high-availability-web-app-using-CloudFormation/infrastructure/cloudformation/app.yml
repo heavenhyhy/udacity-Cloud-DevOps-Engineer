@@ -78,9 +78,9 @@ Resources:
     Properties:
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: 10
-      HealthCheckPath: /health
+      HealthCheckPath: /
       Name: ApplicationTargetGroup
-      Port: 5000
+      Port: 80
       VpcId: !ImportValue VpcId
       Protocol: HTTP
       TargetType: instance
