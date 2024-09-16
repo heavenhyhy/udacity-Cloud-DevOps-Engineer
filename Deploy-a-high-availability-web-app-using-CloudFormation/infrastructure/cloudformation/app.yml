@@ -5,21 +5,32 @@ Parameters:
     Type: String
 
 Resources:
-  ProfileWithRolesForOurApp:
-      Type: AWS::IAM::InstanceProfile
-      Properties: 
-        Roles:
-          - !ImportValue S3Role
+  
+  # Can not create and use InstanceProfile due to:
+  # User: arn:aws:sts::902971260576:assumed-role/voclabs/user3351969=81da30af-3fd5-44e4-b5b6-60110b443ba5 
+  # is not authorized to perform: iam:GetInstanceProfile on resource: instance profile Ec2ProfileWithS3Role 
+  # because no identity-based policy allows the iam:GetInstanceProfile action
+  # ProfileWithRolesForOurApp:
+  #     Type: AWS::IAM::InstanceProfile
+  #     Properties: 
+  #       InstanceProfileName: Ec2ProfileWithS3Role
+  #       Roles:
+  #         - !ImportValue S3Role
 
   LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
       LaunchTemplateData:
-        ImageId: ami-070f589e4b4a3fece
+        ImageId: ami-0a0e5d9c7acc336f1
         InstanceType: "t2.micro"
         SecurityGroupIds:
           - !ImportValue ApplicationSecurityGroup
-        IamInstanceProfile: !Ref ProfileWithRolesForOurApp
+        # IamInstanceProfile: 
+        #   Name: Ec2ProfileWithS3Role
+        BlockDeviceMappings:
+          - DeviceName: "/dev/sdk"
+            Ebs:
+              VolumeSize: '11' 
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -50,8 +61,7 @@ Resources:
       Name: application-alb
       SecurityGroups:
       - !GetAtt ApplicationLoadBalancerSG.GroupId
-      Subnets:
-        - !ImportValue PublicSubnets
+      Subnets: !Split [ ", ", !ImportValue PublicSubnets ]
 
   ApplicationLoadBalancerListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -78,7 +88,7 @@ Resources:
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      VPCZoneIdentifier: !ImportValue PublicSubnets
+      VPCZoneIdentifier: !Split [ ", ", !ImportValue PublicSubnets ]
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber

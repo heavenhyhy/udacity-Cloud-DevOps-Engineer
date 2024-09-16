@@ -32,7 +32,7 @@ resource "aws_cloudformation_stack" "app" {
   depends_on    = [aws_cloudformation_stack.network, aws_cloudformation_stack.s3]
 
   name = "app"
-  capabilities  = ["CAPABILITY_IAM"]
+  capabilities  = ["CAPABILITY_NAMED_IAM"]
   parameters    = {
     KeyPair = aws_key_pair.ssh.key_name
   }
