@@ -1,0 +1,86 @@
+Description: Creates an ECR repository and a CodeBuild project.
+
+Parameters:
+  GitHubOAuthToken:
+  Type: String
+  Description: GitHub personal access token
+
+Resources:
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: analytics-application-ecr
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: analytics-application-codebuild
+      ServiceRole: !Ref CodeBuildServiceRole
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: us-east-1
+      Source:
+        Type: GITHUB
+        Location: https://github.com/${GitHubOwner}/${GitHubRepo}.git
+        GitCloneDepth: 1
+        GitSubmodulesConfig:
+          FetchSubmodules: true
+        BuildSpec: !Sub |
+          version: 0.2
+          env:
+            variables:
+              ECR_REPOSITORY_URI: !Ref ECRRepository
+          phases:
+            install:
+              runtime-versions:
+                python: 3.9
+              commands:
+                - echo "Installing dependencies..."
+                - apt update
+                - apt install build-essential libpq-dev
+                - pip install --upgrade pip setuptools wheel
+                - pip install -r ./Operationalizing-CoWorking-Space-Service/analytics/requirements.txt
+            pre_build:
+              commands:
+                - echo "Logging in to Amazon ECR..."
+                - $(aws ecr get-login --no-include-email)
+            build:
+              commands:
+                - echo Build started on `date`
+                - echo Building the Docker image...
+                - cd ./Operationalizing-CoWorking-Space-Service/analytics
+                - docker build -t $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
+            post_build:
+              commands:
+                - docker push $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
+        Auth:
+          Type: OAUTH
+          Resource: !Ref GitHubOAuthToken
+
+Outputs:
+  ECRRepositoryName:
+    Description: Name of the ECR repository
+    Value: !Ref ECRRepository
+  CodeBuildProjectName:
+    Description: Name of the CodeBuild project
+    Value: !Ref CodeBuildProject
