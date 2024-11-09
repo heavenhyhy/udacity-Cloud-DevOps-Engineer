@@ -2,7 +2,7 @@ Description: Creates an ECR repository and a CodeBuild project.
 
 Parameters:
   GitHubOAuthToken:
-  Type: String
+  Type: AWS::SSM::Parameter::Value<String>
   Description: GitHub personal access token
 
 Resources:
@@ -41,7 +41,7 @@ Resources:
             Value: us-east-1
       Source:
         Type: GITHUB
-        Location: https://github.com/${GitHubOwner}/${GitHubRepo}.git
+        Location: https://github.com/heavenhyhy/udacity-Cloud-DevOps-Engineer.git
         GitCloneDepth: 1
         GitSubmodulesConfig:
           FetchSubmodules: true
