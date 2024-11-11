@@ -73,7 +73,7 @@ Resources:
               commands:
                 - echo Building the Docker image...
                 - cd ./Operationalizing-CoWorking-Space-Service/analytics
-                - docker build -t $ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER
+                - docker build -t $ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER .
             post_build:
               commands:
                 - echo Pushing to ECR...
