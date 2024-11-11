@@ -71,13 +71,14 @@ Resources:
                   docker login --username AWS --password-stdin $ECR_REPOSITORY_URI_LOGIN
             build:
               commands:
-                - echo Building the Docker image...
+                - echo "Building the Docker image..."
                 - cd ./Operationalizing-CoWorking-Space-Service/analytics
                 - docker build -t $ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER .
+                - docker tag $ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER 
             post_build:
               commands:
-                - echo Pushing to ECR...
-                - docker push $ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
+                - echo "Pushing to ECR..."
+                - docker push $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
         Auth:
           Type: OAUTH
           Resource: !Ref CodeBuildSourceCredential
