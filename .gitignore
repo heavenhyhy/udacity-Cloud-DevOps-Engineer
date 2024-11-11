@@ -2,3 +2,4 @@
 /Deploy-a-high-availability-web-app-using-CloudFormation/infrastructure/.terraform
 /Operationalizing-CoWorking-Space-Service/infrastructure/pipeline/.terraform
 /Operationalizing-CoWorking-Space-Service/infrastructure/pipeline/terraform.tfstate
+/Operationalizing-CoWorking-Space-Service/infrastructure/pipeline/terraform.tfstate.backup

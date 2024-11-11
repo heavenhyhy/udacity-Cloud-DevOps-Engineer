@@ -2,10 +2,16 @@ Description: Creates an ECR repository and a CodeBuild project.
 
 Parameters:
   GitHubOAuthToken:
-  Type: AWS::SSM::Parameter::Value<String>
-  Description: GitHub personal access token
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: GitHub personal access token
 
 Resources:
+  CodeBuildSourceCredential:
+    Type: AWS::CodeBuild::SourceCredential
+    Properties:
+      AuthType: PERSONAL_ACCESS_TOKEN
+      ServerType: GITHUB
+      Token: !Ref GitHubOAuthToken
   ECRRepository:
     Type: AWS::ECR::Repository
     Properties:
@@ -24,6 +30,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -39,6 +46,12 @@ Resources:
         EnvironmentVariables:
           - Name: AWS_DEFAULT_REGION
             Value: us-east-1
+          - Name: ECR_REPOSITORY_URI
+            Value: !GetAtt ECRRepository.RepositoryUri
+          - Name: ECR_REPOSITORY_URI_LOGIN
+            Value: !Select [0, !Split [ "/", !GetAtt ECRRepository.RepositoryUri ]]
+          - Name: ECR_REPOSITORY
+            Value: !Select [1, !Split [ "/", !GetAtt ECRRepository.RepositoryUri ]]
       Source:
         Type: GITHUB
         Location: https://github.com/heavenhyhy/udacity-Cloud-DevOps-Engineer.git
@@ -47,35 +60,27 @@ Resources:
           FetchSubmodules: true
         BuildSpec: !Sub |
           version: 0.2
-          env:
-            variables:
-              ECR_REPOSITORY_URI: !Ref ECRRepository
           phases:
             install:
               runtime-versions:
                 python: 3.9
-              commands:
-                - echo "Installing dependencies..."
-                - apt update
-                - apt install build-essential libpq-dev
-                - pip install --upgrade pip setuptools wheel
-                - pip install -r ./Operationalizing-CoWorking-Space-Service/analytics/requirements.txt
             pre_build:
               commands:
                 - echo "Logging in to Amazon ECR..."
-                - $(aws ecr get-login --no-include-email)
+                - aws ecr get-login-password --region $AWS_DEFAULT_REGION | 
+                  docker login --username AWS --password-stdin $ECR_REPOSITORY_URI_LOGIN
             build:
               commands:
-                - echo Build started on `date`
                 - echo Building the Docker image...
                 - cd ./Operationalizing-CoWorking-Space-Service/analytics
-                - docker build -t $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
+                - docker build -t $ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER
             post_build:
               commands:
-                - docker push $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
+                - echo Pushing to ECR...
+                - docker push $ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
         Auth:
           Type: OAUTH
-          Resource: !Ref GitHubOAuthToken
+          Resource: !Ref CodeBuildSourceCredential
 
 Outputs:
   ECRRepositoryName:
