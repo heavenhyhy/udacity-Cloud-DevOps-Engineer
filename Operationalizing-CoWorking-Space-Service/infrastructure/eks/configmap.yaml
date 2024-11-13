@@ -4,6 +4,6 @@ metadata:
   name: postgresql-service-configmap
 data:
   DB_NAME: "mydatabase"
-  DB_USER: "sangtd2"
-  DB_HOST: "10.100.178.195"
+  DB_USERNAME: "sangtd2"
+  DB_HOST: "postgresql-service"
   DB_PORT: "5432"
