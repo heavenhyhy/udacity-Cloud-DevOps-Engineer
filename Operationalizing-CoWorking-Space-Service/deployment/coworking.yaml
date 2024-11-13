@@ -44,13 +44,30 @@ spec:
             port: 5153
           initialDelaySeconds: 5
           timeoutSeconds: 5
-        envFrom:
-        - configMapRef:
-            name: postgresql-service-configmap
         env:
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: postgresql-service-configmap
+              key: DB_NAME
+        - name: DB_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: postgresql-service-configmap
+              key: DB_USERNAME
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: postgresql-service-configmap
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: postgresql-service-configmap
+              key: DB_PORT
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: POSTGRES_PASSWORD
-              key: POSTGRES_PASSWORD
+              name: db-pass
+              key: db-password
       restartPolicy: Always
