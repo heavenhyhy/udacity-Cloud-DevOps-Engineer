@@ -82,6 +82,16 @@ Resources:
         Auth:
           Type: OAUTH
           Resource: !Ref CodeBuildSourceCredential
+      Triggers:
+        Webhook: true
+        BuildType: BUILD
+        FilterGroups:
+          # Filter Group 1
+          #    is this  triggered when a webhook payload is of type 'PUSH'
+          - - Type: EVENT
+              Pattern: PUSH
+            - Type: HEAD_REF
+              Pattern: ^refs/heads/.*
 
 Outputs:
   ECRRepositoryName:
