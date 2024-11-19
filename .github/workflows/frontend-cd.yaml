@@ -55,7 +55,7 @@ jobs:
         npm ci  
         npm run test
 
-  build:
+  build-and-deploy:
     needs: [lint, test]
     runs-on: ubuntu-latest
     defaults:
