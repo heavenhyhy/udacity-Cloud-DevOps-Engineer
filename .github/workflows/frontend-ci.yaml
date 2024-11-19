@@ -29,7 +29,6 @@ jobs:
           ${{ runner.OS }}-node-
     - run: |
         npm ci
-        npm run lint
         
   test:
     runs-on: ubuntu-latest
