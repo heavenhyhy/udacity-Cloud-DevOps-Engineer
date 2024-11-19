@@ -91,3 +91,15 @@ jobs:
       run: |
         docker build --build-arg=REACT_APP_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
         docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+    - name: Configure Kubeconfig
+      run:
+       aws eks update-kubeconfig --name sangtd2 --region us-east-1
+    - name: Deploy
+      working-directory: starter/frontend/k8s
+      env:
+        REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        REPOSITORY: sangtd2-mp-frontend
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+          kustomize edit set image frontend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
+          kustomize build | kubectl apply -f -
