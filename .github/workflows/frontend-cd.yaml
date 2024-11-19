@@ -103,3 +103,4 @@ jobs:
       run: |
           kustomize edit set image frontend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
           kustomize build | kubectl apply -f -
+          kubectl get svc
