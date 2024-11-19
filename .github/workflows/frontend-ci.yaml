@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**'
+      - 'Movie-Picture-Pipeline/starter/frontend/**'
   workflow_dispatch:
 
 jobs:
@@ -70,11 +70,6 @@ jobs:
         key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.OS }}-node-
-    - run: 
+    - run: |
         npm ci
-        npm run build
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v6.9.0
-      with:
-        push: false
-        tags: movie-picture-pipeline-sangtd2/frontend:latest
+        docker build .

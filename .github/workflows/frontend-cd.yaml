@@ -2,14 +2,22 @@ name: Frontend CD
 
 on:
   push:
+    branches:
+      - main
     paths:
-      - 'frontend/**'
+      - 'Movie-Picture-Pipeline/starter/frontend/**'
   workflow_dispatch:
+
+env:
+  REACT_APP_MOVIE_API_URL: "http://localhost:5000"
 
 jobs:
 
-  test:
+  lint:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ../../Movie-Picture-Pipeline/starter/frontend/
     
     steps:
     - uses: actions/checkout@v4
@@ -22,32 +30,64 @@ jobs:
         key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.OS }}-node-
-    - run: npm ci
-    - run: npm test
-
-  build:
-    needs: test
+    - run: |
+        npm ci
+        npm run lint
+        
+  test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ../../Movie-Picture-Pipeline/starter/frontend/
     
     steps:
     - uses: actions/checkout@v4
-    - name: Build and push Docker image
-      id: docker_build
-      uses: docker/build-push-action@v6.9.0
+    - uses: actions/setup-node@v4
       with:
-        push: true
-        tags: |
-          ${{ secrets.ECR_REGISTRY }}/frontend:${{ github.sha }}
-          ${{ secrets.ECR_REGISTRY }}/frontend:latest
+        node-version: 14
+    - uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.OS }}-node-
+    - run: |
+        npm ci  
+        npm run test
 
-  deploy:
-    needs: build
+  build:
+    needs: [lint, test]
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: ../../Movie-Picture-Pipeline/starter/frontend/
+    
     steps:
     - uses: actions/checkout@v4
-    - name: Deploy to Kubernetes
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 14
+    - uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.OS }}-node-
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: us-east-1
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+    - name: Build, tag, and push docker image to Amazon ECR
+      env:
+        REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        REPOSITORY: sangtd2-mp-frontend
+        IMAGE_TAG: ${{ github.sha }}
       run: |
-        # Install and configure Kubernetes tools
-        # Apply Kubernetes manifests using the built image tag
-        # See development notes for relevant commands
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+        docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
