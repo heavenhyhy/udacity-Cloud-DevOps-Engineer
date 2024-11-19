@@ -27,7 +27,8 @@ jobs:
         key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.OS }}-node-
-    - run: |
+    - name: Lint
+      run: |
         npm ci
         npm run lint
         
@@ -48,7 +49,8 @@ jobs:
         key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.OS }}-node-
-    - run: |
+    - name: Run test 
+      run: |
         npm ci  
         npm run test
 
@@ -70,6 +72,4 @@ jobs:
         key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.OS }}-node-
-    - run: |
-        npm ci
-        docker build .
+    - run: docker build .
