@@ -33,13 +33,13 @@ You'll find 2 folders, one named `frontend` and one named `backend`, where each 
 
 ### AWS resource
 
-1. [Backend ECR]()
-1. [Frontend ECR]()
+1. [Backend ECR](/Movie-Picture-Pipeline/screenshoots/ecr-be.png)
+1. [Frontend ECR](/Movie-Picture-Pipeline/screenshoots/ecr-fe.png)
 
 ### Application
 
 1. URL: http://a7161a1edeca745f3b0c958c7b29b127-964878460.us-east-1.elb.amazonaws.com
-2. [Screenshoot]()
+2. [Screenshoot](/Movie-Picture-Pipeline/screenshoots/app.png)
 
 ## Terraform Destroy
 
