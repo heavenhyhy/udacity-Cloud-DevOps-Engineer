@@ -83,7 +83,7 @@ jobs:
       run:
        aws eks update-kubeconfig --name sangtd2 --region us-east-1
     - name: Deploy
-      working-directory: starter/backend/k8s
+      working-directory: Movie-Picture-Pipeline/starter/backend/k8s
       env:
         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         REPOSITORY: sangtd2-mp-backend

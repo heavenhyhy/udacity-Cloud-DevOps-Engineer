@@ -10,3 +10,6 @@ Note: Terraform did not support parameter files yet so I don't have `network-par
 
 ### Project: Coworking Space Service
 [Link](./Operationalizing-CoWorking-Space-Service)
+
+### Project: Movie Picture Pipeline
+[Link](./Movie-Picture-Pipeline)
